@@ -31,26 +31,26 @@ CREATE TABLE IF NOT EXISTS public."Course"
     title character varying(120) NOT NULL,
     credits smallint NOT NULL,
     semester smallint NOT NULL,
-    instructor_id integer NOT NULL,
     PRIMARY KEY (course_id)
 );
 
 CREATE TABLE IF NOT EXISTS public."Enrollment"
 (
-    student_id integer NOT NULL,
     course_id integer NOT NULL,
+    student_id integer NOT NULL,
+    instructor_id integer NOT NULL,
     grade smallint NOT NULL,
     attempt_no smallint NOT NULL,
     exam_date date NOT NULL,
-    PRIMARY KEY (student_id, course_id, attempt_no)
+    PRIMARY KEY (student_id, course_id, attempt_no, instructor_id)
 );
 
-ALTER TABLE IF EXISTS public."Course"
-    ADD CONSTRAINT fk_course_instructor FOREIGN KEY (instructor_id)
-    REFERENCES public."Instructor" (instructor_id) MATCH SIMPLE
-    ON UPDATE CASCADE
-    ON DELETE RESTRICT;
-
+CREATE TABLE IF NOT EXISTS public."CourseInstructor"
+(
+    course_id integer NOT NULL,
+    instructor_id integer NOT NULL,
+    PRIMARY KEY (course_id, instructor_id)
+);
 
 ALTER TABLE IF EXISTS public."Enrollment"
     ADD CONSTRAINT fk_enroll_student FOREIGN KEY (student_id)
@@ -62,6 +62,27 @@ ALTER TABLE IF EXISTS public."Enrollment"
 ALTER TABLE IF EXISTS public."Enrollment"
     ADD CONSTRAINT fk_enroll_course FOREIGN KEY (course_id)
     REFERENCES public."Course" (course_id) MATCH SIMPLE
+    ON UPDATE CASCADE
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public."Enrollment"
+    ADD CONSTRAINT fk_enroll_course_instructor FOREIGN KEY (course_id, instructor_id)
+    REFERENCES public."CourseInstructor" (course_id, instructor_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public."CourseInstructor"
+    ADD CONSTRAINT "CourseInstructor.course_id" FOREIGN KEY (course_id)
+    REFERENCES public."Course" (course_id) MATCH SIMPLE
+    ON UPDATE CASCADE
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public."CourseInstructor"
+    ADD CONSTRAINT "CourseInstructor.instructor_id" FOREIGN KEY (instructor_id)
+    REFERENCES public."Instructor" (instructor_id) MATCH SIMPLE
     ON UPDATE CASCADE
     ON DELETE CASCADE;
 
