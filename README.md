@@ -72,7 +72,7 @@
 * `Enrollment(course_id, student_id, instructor_id) PK/FK → (Course, Student, Instructor)` — **асоціативна трійка**
 * `Exam(student_id, course_id, instructor_id, attempt_no) PK, FK → Enrollment` — 1:N (кілька спроб)
 
-![ER-діаграма бази даних](./LAB1(DB)ER.drawio.png.drawio.png?v=2025-10-13-1)
+![ER-діаграма бази даних](./LAB1(DB)ER.drawio.png?v=2025-10-13-1)
 ![Скрін з pgAdmin (схема БД)](./LAB1(DB)SH.png?v=2025-10-13-1)
 
 
@@ -193,7 +193,7 @@ END;
 ### Інсталяція
 
 ```bash
-git clone <>
+git clone <https://github.com/PR0TX/Databases-and-management-tools/tree/RGR>
 cd <Databases-and-management-tools>
 
 pip install -r requirements.txt
