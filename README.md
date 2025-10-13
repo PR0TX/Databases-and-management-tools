@@ -104,7 +104,7 @@ INSERT INTO "Exam" VALUES
 
 ## 🖼 ER-діаграма
 
-![ER-діаграма бази даних](./LAB1(DB).drawio.png)
+![ER-діаграма бази даних](./LAB1(DB).drawio.png?v=2025-10-13-1)
 
 ---
 
