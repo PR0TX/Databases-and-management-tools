@@ -113,5 +113,3 @@ INSERT INTO "Exam" VALUES
 **Протченко Павло, КВ-34**
 Telegram: [@PR0TX](https://t.me/PR0TX)
 
-```
-```
