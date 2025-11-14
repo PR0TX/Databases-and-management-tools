@@ -1,0 +1,18 @@
+Запит №3
+
+SELECT instructor_id, email
+FROM public."Instructor"
+ORDER BY instructor_id
+LIMIT 3;
+
+Правильно
+
+UPDATE public."Instructor"
+SET email = 'new_email@example.com'
+WHERE instructor_id = <id>;
+
+Неправильно
+
+UPDATE public."Instructor"
+SET email = 'wrong_email_without_at'
+WHERE instructor_id = <id>;

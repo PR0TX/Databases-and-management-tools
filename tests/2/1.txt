@@ -1,0 +1,97 @@
+Запит №1
+
+EXPLAIN ANALYZE
+SELECT
+    s.student_id,
+    s.last_name,
+    s.first_name,
+    c.title,
+    ex.attempt_no,
+    ex.exam_date,
+    ex.grade
+FROM "Exam" ex
+JOIN "Enrollment" en
+  ON en.student_id    = ex.student_id
+ AND en.course_id     = ex.course_id
+ AND en.instructor_id = ex.instructor_id
+JOIN "Student" s
+  ON s.student_id = ex.student_id
+JOIN "Course" c
+  ON c.course_id = ex.course_id
+WHERE s.group_code = 'KP-21'
+  AND ex.grade BETWEEN 60 AND 90
+  AND c.title ILIKE '%Data%'
+  AND ex.exam_date BETWEEN DATE '2022-01-01' AND DATE '2025-12-31'
+ORDER BY s.last_name, s.first_name, ex.exam_date DESC;
+
+
+
+До:
+
+"Gather Merge  (cost=7177.47..7180.97 rows=30 width=291) (actual time=51.833..54.892 rows=458 loops=1)"
+"  Workers Planned: 2"
+"  Workers Launched: 2"
+"  ->  Sort  (cost=6177.45..6177.48 rows=15 width=291) (actual time=15.516..15.530 rows=153 loops=3)"
+"        Sort Key: s.last_name, s.first_name, ex.exam_date DESC"
+"        Sort Method: quicksort  Memory: 51kB"
+"        Worker 0:  Sort Method: quicksort  Memory: 27kB"
+"        Worker 1:  Sort Method: quicksort  Memory: 25kB"
+"        ->  Nested Loop  (cost=14.13..6177.15 rows=15 width=291) (actual time=0.570..15.294 rows=153 loops=3)"
+"              ->  Nested Loop  (cost=13.69..6137.87 rows=15 width=307) (actual time=0.354..14.577 rows=153 loops=3)"
+"                    ->  Hash Join  (cost=13.40..6029.02 rows=293 width=282) (actual time=0.226..8.907 rows=3444 loops=3)"
+"                          Hash Cond: (ex.course_id = c.course_id)"
+"                          ->  Parallel Seq Scan on ""Exam"" ex  (cost=0.00..5910.00 rows=39615 width=20) (actual time=0.005..7.084 rows=31164 loops=3)"
+"                                Filter: ((grade >= 60) AND (grade <= 90) AND (exam_date >= '2022-01-01'::date) AND (exam_date <= '2025-12-31'::date))"
+"                                Rows Removed by Filter: 68836"
+"                          ->  Hash  (cost=13.38..13.38 rows=2 width=262) (actual time=0.296..0.296 rows=1 loops=2)"
+"                                Buckets: 1024  Batches: 1  Memory Usage: 9kB"
+"                                ->  Seq Scan on ""Course"" c  (cost=0.00..13.38 rows=2 width=262) (actual time=0.287..0.292 rows=1 loops=2)"
+"                                      Filter: ((title)::text ~~* '%Data%'::text)"
+"                                      Rows Removed by Filter: 8"
+"                    ->  Index Scan using pk_student on ""Student"" s  (cost=0.29..0.37 rows=1 width=25) (actual time=0.002..0.002 rows=0 loops=10332)"
+"                          Index Cond: (student_id = ex.student_id)"
+"                          Filter: ((group_code)::text = 'KP-21'::text)"
+"                          Rows Removed by Filter: 1"
+"              ->  Index Only Scan using pk_enrollment on ""Enrollment"" en  (cost=0.43..2.62 rows=1 width=12) (actual time=0.004..0.004 rows=1 loops=458)"
+"                    Index Cond: ((course_id = ex.course_id) AND (student_id = ex.student_id) AND (instructor_id = ex.instructor_id))"
+"                    Heap Fetches: 0"
+"Planning Time: 0.589 ms"
+"Execution Time: 54.961 ms"
+
+
+
+Після:
+
+"Gather Merge  (cost=8991.18..9042.05 rows=436 width=291) (actual time=51.191..54.287 rows=458 loops=1)"
+"  Workers Planned: 2"
+"  Workers Launched: 2"
+"  ->  Sort  (cost=7991.16..7991.70 rows=218 width=291) (actual time=9.255..9.273 rows=153 loops=3)"
+"        Sort Key: s.last_name, s.first_name, ex.exam_date DESC"
+"        Sort Method: quicksort  Memory: 53kB"
+"        Worker 0:  Sort Method: quicksort  Memory: 25kB"
+"        Worker 1:  Sort Method: quicksort  Memory: 25kB"
+"        ->  Nested Loop  (cost=1390.65..7982.69 rows=218 width=291) (actual time=1.073..8.990 rows=153 loops=3)"
+"              ->  Hash Join  (cost=1390.21..7411.77 rows=218 width=307) (actual time=1.066..8.594 rows=153 loops=3)"
+"                    Hash Cond: (ex.course_id = c.course_id)"
+"                    ->  Parallel Hash Join  (cost=1389.09..7403.08 rows=1960 width=45) (actual time=0.706..8.186 rows=1529 loops=3)"
+"                          Hash Cond: (ex.student_id = s.student_id)"
+"                          ->  Parallel Seq Scan on ""Exam"" ex  (cost=0.00..5910.00 rows=39615 width=20) (actual time=0.004..17.074 rows=93492 loops=1)"
+"                                Filter: ((grade >= 60) AND (grade <= 90) AND (exam_date >= '2022-01-01'::date) AND (exam_date <= '2025-12-31'::date))"
+"                                Rows Removed by Filter: 206508"
+"                          ->  Parallel Hash  (cost=1352.71..1352.71 rows=2910 width=25) (actual time=0.679..0.679 rows=1632 loops=3)"
+"                                Buckets: 8192  Batches: 1  Memory Usage: 384kB"
+"                                ->  Parallel Bitmap Heap Scan on ""Student"" s  (cost=190.34..1352.71 rows=2910 width=25) (actual time=0.250..1.596 rows=4895 loops=1)"
+"                                      Recheck Cond: ((group_code)::text = 'KP-21'::text)"
+"                                      Heap Blocks: exact=1112"
+"                                      ->  Bitmap Index Scan on idx_student_group_hash  (cost=0.00..189.10 rows=4947 width=0) (actual time=0.172..0.172 rows=4895 loops=1)"
+"                                            Index Cond: ((group_code)::text = 'KP-21'::text)"
+"                    ->  Hash  (cost=1.11..1.11 rows=1 width=262) (actual time=0.298..0.298 rows=1 loops=3)"
+"                          Buckets: 1024  Batches: 1  Memory Usage: 9kB"
+"                          ->  Seq Scan on ""Course"" c  (cost=0.00..1.11 rows=1 width=262) (actual time=0.290..0.294 rows=1 loops=3)"
+"                                Filter: ((title)::text ~~* '%Data%'::text)"
+"                                Rows Removed by Filter: 8"
+"              ->  Index Only Scan using pk_enrollment on ""Enrollment"" en  (cost=0.43..2.62 rows=1 width=12) (actual time=0.002..0.002 rows=1 loops=458)"
+"                    Index Cond: ((course_id = ex.course_id) AND (student_id = ex.student_id) AND (instructor_id = ex.instructor_id))"
+"                    Heap Fetches: 0"
+"Planning Time: 0.854 ms"
+"Execution Time: 54.365 ms"

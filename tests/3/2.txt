@@ -1,0 +1,14 @@
+Запит №2
+
+SELECT DISTINCT i.instructor_id, i.last_name, i.first_name
+FROM public."Instructor" i
+JOIN public."Enrollment" e ON e.instructor_id = i.instructor_id
+ORDER BY i.instructor_id
+LIMIT 5;
+
+
+
+
+DELETE FROM public."Instructor"
+WHERE instructor_id = <id>;
+

@@ -88,14 +88,5 @@ ALTER TABLE IF EXISTS public."Exam"
   REFERENCES public."Enrollment"(course_id, student_id, instructor_id)
   ON UPDATE CASCADE ON DELETE CASCADE;
 
--- ===== Performance Indexes ===============================
-
--- Enrollment
-CREATE INDEX IF NOT EXISTS idx_enroll_course     ON public."Enrollment"(course_id);
-CREATE INDEX IF NOT EXISTS idx_enroll_student    ON public."Enrollment"(student_id);
-CREATE INDEX IF NOT EXISTS idx_enroll_instructor ON public."Enrollment"(instructor_id);
-
--- Exam
-CREATE INDEX IF NOT EXISTS idx_exam_enroll ON public."Exam"(course_id, student_id, instructor_id);
 
 END;

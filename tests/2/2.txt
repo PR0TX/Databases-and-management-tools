@@ -1,0 +1,112 @@
+Запит №2
+
+EXPLAIN ANALYZE
+SELECT
+    c.title,
+    (i.last_name || ' ' || i.first_name) AS instructor,
+    COUNT(*)               AS attempts,
+    ROUND(AVG(ex.grade),1) AS avg_grade
+FROM "Exam" ex
+JOIN "Enrollment" en
+  ON en.student_id    = ex.student_id
+ AND en.course_id     = ex.course_id
+ AND en.instructor_id = ex.instructor_id
+JOIN "Course" c
+  ON c.course_id = ex.course_id
+JOIN "Instructor" i
+  ON i.instructor_id = ex.instructor_id
+WHERE ex.exam_date BETWEEN DATE '2022-01-01' AND DATE '2025-12-31'
+  AND c.title ILIKE '%Data%'
+GROUP BY c.title, i.last_name, i.first_name
+HAVING COUNT(*) >= 50
+ORDER BY avg_grade DESC;
+
+
+
+До:
+
+
+"Sort  (cost=8146.62..8148.29 rows=667 width=350) (actual time=81.795..81.828 rows=20 loops=1)"
+"  Sort Key: (round(avg(ex.grade), 1)) DESC"
+"  Sort Method: quicksort  Memory: 26kB"
+"  ->  Finalize GroupAggregate  (cost=7820.26..8115.33 rows=667 width=350) (actual time=79.907..81.816 rows=20 loops=1)"
+"        Group Key: c.title, i.last_name, i.first_name"
+"        Filter: (count(*) >= 50)"
+"        ->  Gather Merge  (cost=7820.26..8057.18 rows=1852 width=318) (actual time=79.800..81.785 rows=60 loops=1)"
+"              Workers Planned: 2"
+"              Workers Launched: 2"
+"              ->  Partial GroupAggregate  (cost=6820.24..6843.39 rows=926 width=318) (actual time=47.767..48.984 rows=20 loops=3)"
+"                    Group Key: c.title, i.last_name, i.first_name"
+"                    ->  Sort  (cost=6820.24..6822.55 rows=926 width=280) (actual time=47.693..47.956 rows=10987 loops=3)"
+"                          Sort Key: c.title, i.last_name, i.first_name"
+"                          Sort Method: quicksort  Memory: 1837kB"
+"                          Worker 0:  Sort Method: quicksort  Memory: 597kB"
+"                          Worker 1:  Sort Method: quicksort  Memory: 509kB"
+"                          ->  Nested Loop  (cost=14.12..6774.61 rows=926 width=280) (actual time=0.472..40.215 rows=10987 loops=3)"
+"                                ->  Nested Loop  (cost=13.84..6745.35 rows=926 width=268) (actual time=0.454..37.763 rows=10987 loops=3)"
+"                                      ->  Hash Join  (cost=13.40..5631.61 rows=926 width=276) (actual time=0.238..12.340 rows=10987 loops=3)"
+"                                            Hash Cond: (ex.course_id = c.course_id)"
+"                                            ->  Parallel Seq Scan on ""Exam"" ex  (cost=0.00..5285.00 rows=124976 width=14) (actual time=0.006..7.583 rows=100000 loops=3)"
+"                                                  Filter: ((exam_date >= '2022-01-01'::date) AND (exam_date <= '2025-12-31'::date))"
+"                                            ->  Hash  (cost=13.38..13.38 rows=2 width=262) (actual time=0.221..0.221 rows=1 loops=3)"
+"                                                  Buckets: 1024  Batches: 1  Memory Usage: 9kB"
+"                                                  ->  Seq Scan on ""Course"" c  (cost=0.00..13.38 rows=2 width=262) (actual time=0.214..0.218 rows=1 loops=3)"
+"                                                        Filter: ((title)::text ~~* '%Data%'::text)"
+"                                                        Rows Removed by Filter: 8"
+"                                      ->  Index Only Scan using pk_enrollment on ""Enrollment"" en  (cost=0.43..1.20 rows=1 width=12) (actual time=0.002..0.002 rows=1 loops=32961)"
+"                                            Index Cond: ((course_id = ex.course_id) AND (student_id = ex.student_id) AND (instructor_id = ex.instructor_id))"
+"                                            Heap Fetches: 0"
+"                                ->  Memoize  (cost=0.29..0.30 rows=1 width=24) (actual time=0.000..0.000 rows=1 loops=32961)"
+"                                      Cache Key: en.instructor_id"
+"                                      Cache Mode: logical"
+"                                      Hits: 19651  Misses: 20  Evictions: 0  Overflows: 0  Memory Usage: 3kB"
+"                                      Worker 0:  Hits: 7438  Misses: 20  Evictions: 0  Overflows: 0  Memory Usage: 3kB"
+"                                      Worker 1:  Hits: 5812  Misses: 20  Evictions: 0  Overflows: 0  Memory Usage: 3kB"
+"                                      ->  Index Scan using pk_instructor on ""Instructor"" i  (cost=0.28..0.29 rows=1 width=24) (actual time=0.002..0.002 rows=1 loops=60)"
+"                                            Index Cond: (instructor_id = en.instructor_id)"
+"Planning Time: 0.679 ms"
+"Execution Time: 82.038 ms"
+
+
+
+Після:
+"Sort  (cost=24064.18..24065.01 rows=333 width=350) (actual time=70.477..74.793 rows=20 loops=1)"
+"  Sort Key: (round(avg(ex.grade), 1)) DESC"
+"  Sort Method: quicksort  Memory: 26kB"
+"  ->  Finalize GroupAggregate  (cost=23774.38..24050.23 rows=333 width=350) (actual time=70.432..74.783 rows=20 loops=1)"
+"        Group Key: c.title, i.last_name, i.first_name"
+"        Filter: (count(*) >= 50)"
+"        ->  Gather Merge  (cost=23774.38..24007.73 rows=2000 width=318) (actual time=70.422..74.755 rows=60 loops=1)"
+"              Workers Planned: 2"
+"              Workers Launched: 2"
+"              ->  Sort  (cost=22774.36..22776.86 rows=1000 width=318) (actual time=45.808..45.811 rows=20 loops=3)"
+"                    Sort Key: c.title, i.last_name, i.first_name"
+"                    Sort Method: quicksort  Memory: 26kB"
+"                    Worker 0:  Sort Method: quicksort  Memory: 26kB"
+"                    Worker 1:  Sort Method: quicksort  Memory: 26kB"
+"                    ->  Partial HashAggregate  (cost=22714.53..22724.53 rows=1000 width=318) (actual time=45.761..45.766 rows=20 loops=3)"
+"                          Group Key: c.title, i.last_name, i.first_name"
+"                          Batches: 1  Memory Usage: 73kB"
+"                          Worker 0:  Batches: 1  Memory Usage: 73kB"
+"                          Worker 1:  Batches: 1  Memory Usage: 73kB"
+"                          ->  Hash Join  (cost=36.06..22540.95 rows=13886 width=280) (actual time=1.056..43.331 rows=10987 loops=3)"
+"                                Hash Cond: (en.instructor_id = i.instructor_id)"
+"                                ->  Nested Loop  (cost=1.56..22469.85 rows=13886 width=268) (actual time=0.615..41.416 rows=10987 loops=3)"
+"                                      ->  Hash Join  (cost=1.12..5768.67 rows=13886 width=276) (actual time=0.313..13.322 rows=10987 loops=3)"
+"                                            Hash Cond: (ex.course_id = c.course_id)"
+"                                            ->  Parallel Seq Scan on ""Exam"" ex  (cost=0.00..5285.00 rows=124976 width=14) (actual time=0.007..8.272 rows=100000 loops=3)"
+"                                                  Filter: ((exam_date >= '2022-01-01'::date) AND (exam_date <= '2025-12-31'::date))"
+"                                            ->  Hash  (cost=1.11..1.11 rows=1 width=262) (actual time=0.292..0.292 rows=1 loops=3)"
+"                                                  Buckets: 1024  Batches: 1  Memory Usage: 9kB"
+"                                                  ->  Seq Scan on ""Course"" c  (cost=0.00..1.11 rows=1 width=262) (actual time=0.284..0.288 rows=1 loops=3)"
+"                                                        Filter: ((title)::text ~~* '%Data%'::text)"
+"                                                        Rows Removed by Filter: 8"
+"                                      ->  Index Only Scan using pk_enrollment on ""Enrollment"" en  (cost=0.43..1.20 rows=1 width=12) (actual time=0.002..0.002 rows=1 loops=32961)"
+"                                            Index Cond: ((course_id = ex.course_id) AND (student_id = ex.student_id) AND (instructor_id = ex.instructor_id))"
+"                                            Heap Fetches: 0"
+"                                ->  Hash  (cost=22.00..22.00 rows=1000 width=24) (actual time=0.433..0.434 rows=1000 loops=3)"
+"                                      Buckets: 1024  Batches: 1  Memory Usage: 67kB"
+"                                      ->  Seq Scan on ""Instructor"" i  (cost=0.00..22.00 rows=1000 width=24) (actual time=0.269..0.351 rows=1000 loops=3)"
+"Planning Time: 0.505 ms"
+"Execution Time: 74.883 ms"
+

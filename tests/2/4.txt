@@ -1,0 +1,35 @@
+Запит №4
+
+EXPLAIN ANALYZE
+SELECT
+    c.course_id,
+    c.title,
+    c.credits,
+    c.semester
+FROM "Course" c
+WHERE c.title ILIKE '%data%'
+ORDER BY c.title;
+
+
+До:
+
+"Sort  (cost=13.38..13.39 rows=2 width=266) (actual time=0.022..0.023 rows=1 loops=1)"
+"  Sort Key: title"
+"  Sort Method: quicksort  Memory: 25kB"
+"  ->  Seq Scan on ""Course"" c  (cost=0.00..13.38 rows=2 width=266) (actual time=0.012..0.015 rows=1 loops=1)"
+"        Filter: ((title)::text ~~* '%data%'::text)"
+"        Rows Removed by Filter: 8"
+"Planning Time: 0.054 ms"
+"Execution Time: 0.033 ms"
+
+
+
+Після:
+"Sort  (cost=1.12..1.13 rows=1 width=266) (actual time=0.016..0.017 rows=1 loops=1)"
+"  Sort Key: title"
+"  Sort Method: quicksort  Memory: 25kB"
+"  ->  Seq Scan on ""Course"" c  (cost=0.00..1.11 rows=1 width=266) (actual time=0.009..0.012 rows=1 loops=1)"
+"        Filter: ((title)::text ~~* '%data%'::text)"
+"        Rows Removed by Filter: 8"
+"Planning Time: 0.072 ms"
+"Execution Time: 0.027 ms"

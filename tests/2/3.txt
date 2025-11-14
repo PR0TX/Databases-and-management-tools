@@ -1,0 +1,75 @@
+Запит №3
+
+EXPLAIN ANALYZE
+SELECT
+    s.student_id,
+    s.last_name,
+    s.first_name,
+    COUNT(*)               AS exam_count,
+    ROUND(AVG(ex.grade),1) AS avg_grade
+FROM "Exam" ex
+JOIN "Student" s
+  ON s.student_id = ex.student_id
+WHERE s.group_code = 'KP-21'
+GROUP BY s.student_id, s.last_name, s.first_name
+HAVING COUNT(*) >= 3
+ORDER BY avg_grade DESC;
+
+
+До:
+
+"Sort  (cost=9211.71..9215.83 rows=1649 width=65) (actual time=45.570..46.732 rows=2158 loops=1)"
+"  Sort Key: (round(avg(ex.grade), 1)) DESC"
+"  Sort Method: quicksort  Memory: 231kB"
+"  ->  Finalize HashAggregate  (cost=9045.26..9123.59 rows=1649 width=65) (actual time=44.560..46.191 rows=2158 loops=1)"
+"        Group Key: s.student_id"
+"        Filter: (count(*) >= 3)"
+"        Batches: 1  Memory Usage: 721kB"
+"        ->  Gather  (cost=7932.19..8971.06 rows=9894 width=65) (actual time=36.816..45.320 rows=2158 loops=1)"
+"              Workers Planned: 2"
+"              Workers Launched: 2"
+"              ->  Partial HashAggregate  (cost=6932.19..6981.66 rows=4947 width=65) (actual time=12.205..12.265 rows=719 loops=3)"
+"                    Group Key: s.student_id"
+"                    Batches: 1  Memory Usage: 721kB"
+"                    Worker 0:  Batches: 1  Memory Usage: 217kB"
+"                    Worker 1:  Batches: 1  Memory Usage: 217kB"
+"                    ->  Parallel Hash Join  (cost=1897.67..6885.81 rows=6184 width=27) (actual time=2.649..11.554 rows=4987 loops=3)"
+"                          Hash Cond: (ex.student_id = s.student_id)"
+"                          ->  Parallel Seq Scan on ""Exam"" ex  (cost=0.00..4660.00 rows=125000 width=6) (actual time=0.003..10.035 rows=300005 loops=1)"
+"                          ->  Parallel Hash  (cost=1861.29..1861.29 rows=2910 width=25) (actual time=2.619..2.619 rows=1632 loops=3)"
+"                                Buckets: 8192  Batches: 1  Memory Usage: 384kB"
+"                                ->  Parallel Seq Scan on ""Student"" s  (cost=0.00..1861.29 rows=2910 width=25) (actual time=0.007..7.191 rows=4895 loops=1)"
+"                                      Filter: ((group_code)::text = 'KP-21'::text)"
+"                                      Rows Removed by Filter: 95107"
+"Planning Time: 0.740 ms"
+"Execution Time: 46.997 ms"
+
+
+Після:
+"Sort  (cost=8703.13..8707.25 rows=1649 width=65) (actual time=36.158..37.413 rows=2158 loops=1)"
+"  Sort Key: (round(avg(ex.grade), 1)) DESC"
+"  Sort Method: quicksort  Memory: 231kB"
+"  ->  Finalize HashAggregate  (cost=8536.68..8615.01 rows=1649 width=65) (actual time=34.809..36.708 rows=2158 loops=1)"
+"        Group Key: s.student_id"
+"        Filter: (count(*) >= 3)"
+"        Batches: 1  Memory Usage: 721kB"
+"        ->  Gather  (cost=7423.61..8462.48 rows=9894 width=65) (actual time=31.909..35.444 rows=2717 loops=1)"
+"              Workers Planned: 2"
+"              Workers Launched: 2"
+"              ->  Partial HashAggregate  (cost=6423.61..6473.08 rows=4947 width=65) (actual time=11.211..11.316 rows=906 loops=3)"
+"                    Group Key: s.student_id"
+"                    Batches: 1  Memory Usage: 721kB"
+"                    Worker 0:  Batches: 1  Memory Usage: 217kB"
+"                    Worker 1:  Batches: 1  Memory Usage: 337kB"
+"                    ->  Parallel Hash Join  (cost=1389.09..6377.23 rows=6184 width=27) (actual time=0.717..10.416 rows=4987 loops=3)"
+"                          Hash Cond: (ex.student_id = s.student_id)"
+"                          ->  Parallel Seq Scan on ""Exam"" ex  (cost=0.00..4660.00 rows=125000 width=6) (actual time=0.005..5.372 rows=150002 loops=2)"
+"                          ->  Parallel Hash  (cost=1352.71..1352.71 rows=2910 width=25) (actual time=0.677..0.677 rows=1632 loops=3)"
+"                                Buckets: 8192  Batches: 1  Memory Usage: 384kB"
+"                                ->  Parallel Bitmap Heap Scan on ""Student"" s  (cost=190.34..1352.71 rows=2910 width=25) (actual time=0.238..1.601 rows=4895 loops=1)"
+"                                      Recheck Cond: ((group_code)::text = 'KP-21'::text)"
+"                                      Heap Blocks: exact=1112"
+"                                      ->  Bitmap Index Scan on idx_student_group_hash  (cost=0.00..189.10 rows=4947 width=0) (actual time=0.157..0.157 rows=4895 loops=1)"
+"                                            Index Cond: ((group_code)::text = 'KP-21'::text)"
+"Planning Time: 0.236 ms"
+"Execution Time: 37.628 ms"

@@ -1,0 +1,35 @@
+Запит №5
+
+EXPLAIN ANALYZE
+SELECT
+    s.student_id,
+    s.last_name,
+    s.first_name,
+    s.group_code
+FROM "Student" s
+WHERE s.group_code > 'KP-05'
+ORDER BY s.group_code;
+
+
+До:
+
+
+"Sort  (cost=13074.82..13324.82 rows=100000 width=31) (actual time=65.127..69.472 rows=100000 loops=1)"
+"  Sort Key: group_code"
+"  Sort Method: external merge  Disk: 4192kB"
+"  ->  Seq Scan on ""Student"" s  (cost=0.00..2376.00 rows=100000 width=31) (actual time=0.010..18.884 rows=100000 loops=1)"
+"        Filter: ((group_code)::text > 'KP-05'::text)"
+"Planning Time: 0.068 ms"
+"Execution Time: 71.904 ms"
+
+
+
+Після:
+
+"Sort  (cost=13074.82..13324.82 rows=100000 width=31) (actual time=59.417..63.786 rows=100000 loops=1)"
+"  Sort Key: group_code"
+"  Sort Method: external merge  Disk: 4192kB"
+"  ->  Seq Scan on ""Student"" s  (cost=0.00..2376.00 rows=100000 width=31) (actual time=0.010..16.951 rows=100000 loops=1)"
+"        Filter: ((group_code)::text > 'KP-05'::text)"
+"Planning Time: 0.071 ms"
+"Execution Time: 66.202 ms"

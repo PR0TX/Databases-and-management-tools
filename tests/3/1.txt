@@ -1,0 +1,9 @@
+Запит №1
+
+INSERT INTO public."Instructor"(last_name, first_name, email, department)
+VALUES ('TempLast', 'TempFirst', 'temp_instructor@example.com', 'TempDept')
+RETURNING instructor_id;
+
+
+DELETE FROM public."Instructor"
+WHERE instructor_id = id;
